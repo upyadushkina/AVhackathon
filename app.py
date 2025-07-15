@@ -86,14 +86,14 @@ data = []
 for file in audio_files:
     filename = file['filename']
     year = file['year']
-    st.write(f"Processing: {filename} ({year})")
+    # st.write(f"Processing: {filename} ({year})")
 
     audio_bytes = download_audio(file['url'])
     if audio_bytes:
         y, sr = librosa.load(audio_bytes, sr=None)
         mean_pitch = get_mean_pitch(y, sr)
         data.append({'filename': filename, 'year': year, 'mean_pitch': mean_pitch})
-        st.write(f"Mean pitch: {mean_pitch:.2f} Hz")
+        # st.write(f"Mean pitch: {mean_pitch:.2f} Hz")
     else:
         st.warning(f"Could not download {filename}")
 
