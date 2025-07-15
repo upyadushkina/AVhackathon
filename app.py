@@ -9,29 +9,55 @@ import matplotlib.pyplot as plt
 
 # ============ CONFIG ============
 
-# List your audio files here:
-# Replace with your actual public Google Drive direct download URLs
-audio_files = [
-    {
-        'filename': 'Kino37.1_1932.0.mp3',
-        'url': 'https://drive.google.com/uc?export=download&id=1otg3BlM_I-ovQ3_csUYK2aFEWe_uSQ1X'
-    },
-    {
-        'filename': 'Kino44.1_1942.0.mp3',
-        'url': 'https://drive.google.com/uc?export=download&id=1qA4V3IglpOKSKM1CIWRx5JdxAislXTcx'
-    },
-    # Add more here...
-]
+def parse_drive_links(txt_file):
+    """
+    Reads a text file with lines:
+    [Google Drive link], [year]
+    and returns a list of dicts with filename, url, and year.
+    """
+    audio_files = []
+
+    try:
+        with open(txt_file, 'r') as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        st.error(f"File {txt_file} not found. Please check the path.")
+        return []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        # Split by comma
+        parts = line.split(',')
+        if len(parts) != 2:
+            st.warning(f"Line format error: {line}")
+            continue
+
+        link, year_str = parts
+        year = int(year_str.strip())
+
+        # Extract Drive file ID
+        match = re.search(r'/d/([a-zA-Z0-9_-]+)', link)
+        if match:
+            file_id = match.group(1)
+            direct_url = f'https://drive.google.com/uc?export=download&id={file_id}'
+            filename = f"{file_id}.mp3"
+            audio_files.append({
+                'filename': filename,
+                'url': direct_url,
+                'year': year
+            })
+        else:
+            st.warning(f"Could not extract file ID: {link}")
+
+    return audio_files
+
+# Load file list from local file in repo
+audio_files = parse_drive_links('file_list.txt')
 
 # ============ FUNCTIONS ============
-
-def extract_year(filename):
-    """Extracts a 4-digit year from the filename."""
-    match = re.search(r'_(\d{4})\.', filename)
-    if match:
-        return int(match.group(1))
-    else:
-        return None
 
 def download_audio(url):
     """Downloads audio file from public Google Drive link."""
@@ -59,7 +85,7 @@ data = []
 
 for file in audio_files:
     filename = file['filename']
-    year = extract_year(filename)
+    year = file['year']
     st.write(f"Processing: {filename} ({year})")
 
     audio_bytes = download_audio(file['url'])
